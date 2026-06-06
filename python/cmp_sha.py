@@ -1,12 +1,19 @@
+#!/usr/bin/env python3
+
 import hashlib as h
 from pathlib import Path
-import os
 import argparse
 
-parser = argparse.ArgumentParser(prog="Compare Hash", usage="Compare two hashes")
+parser = argparse.ArgumentParser(prog="Compare Hash", 
+                                usage="cmp_sha hello.txt -c 'HASH'",
+                                description="Compare a files SHA256 hash with the" \
+                                "given hash from the supplier")
 
 parser.add_argument("file", type=Path, help="File you wish to parse")
 parser.add_argument("-c", type=str, help="Hash you wish to compare")
+
+#TODO - Make a class for hash
+#TODO - Compare two files hash
 
 def hash_file(path: Path):
     # Check if file is empty

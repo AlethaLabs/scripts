@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from pathlib import Path
 import shutil
 
@@ -11,10 +13,14 @@ TARGET = {
 }
 
 def dest_path(dest_dir: Path, filename: str) -> Path:
+    if not dest_dir.exists():
+        dest_dir.mkdir(parents=True, exist_ok=True)
+        print(f"Made directory: {dest_dir}")
+
     path = dest_dir / filename
     if not path.exists():
         return path
-    
+
     stem = Path(filename).stem
     suffix = Path(filename).suffix
     n = 1
@@ -35,11 +41,10 @@ if __name__ == "__main__":
         if not fp.is_file():
             continue
 
-        dest_dir = TARGET.get(fp.suffix.lower())
+        dest_dir = TARGET.get(fp.suffix.lower().lstrip("."))
         if dest_dir is None:
             continue # skip files not in TARGET
 
-        dest_dir.mkdir(parents=True, exist_ok=True)
         path = dest_path(dest_dir, fp.name)
 
         shutil.move(str(fp), str(path))
