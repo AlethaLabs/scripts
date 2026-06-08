@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
 import argparse
+import os
 from pathlib import Path
-# import re
 import hashlib as hash
 from datetime import datetime
 
@@ -19,31 +19,48 @@ log = sub.add_parser("log")
 log.add_argument("-a", "--a", dest="all", default=True, help="log all output to text file")
 log.add_argument("location", type=Path, help="location of output text file")
 
-#TODO - add regex / recursive functionality
+#TODO - add regex
+class Recurse:
+    def __init__(self, path: Path) -> None:
+        self.path = path 
+
+    def get_all(self) -> list[Path]:
+        file_list = []
+        for root, _, files in os.walk(self.path, followlinks=True):
+            root_path = Path(root)
+            for file_name in files:
+                file_list.append(root_path / file_name)
+        return file_list
+
+#TODO - Add compare class / functionality  
 
 class Hash:
-    def __init__(self, path: Path) -> None:
-        self.path = path
+    def __init__(self, paths: list[Path]) -> None:
+        self.paths = paths
     
-    def hash_file(self) -> str:
-        if not self.path.exists():
-            print(f"Path: {self.path} does not exist :(")
-            return ""
-        else:
-            if self.path.stat().st_size == 0:
-                print(f"File: {self.path} is empty")
-                return ""
+    def hash_file(self) -> list[str]:
+        h_list = []
+        for i in self.paths:
+            if not i.exists():
+                print(f"Path: {i} does not exist :(")
+                continue
+            else:
+                if i.stat().st_size == 0:
+                    print(f"File: {i} is empty")
+                    continue
 
             h = hash.sha256()
-            bytes = self.path.read_bytes()
+            bytes = i.read_bytes()
 
             if bytes:
                 h.update(bytes)
             else:
                 print("Couldn't hash file")
-                return ""
+                continue
             
-            return h.hexdigest()
+            h_list.append(f"{i.name}: {h.hexdigest()}")
+
+        return h_list
 
 class Log:
     def __init__(self, output_all: bool, location: Path, sha: list[str]) -> None:
@@ -63,14 +80,12 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     sha_list = []
-    for f in args.directory.iterdir():
-        if not f.is_file():
-            continue
+    d_list = Recurse(args.directory).get_all()
 
-        hash_obj = Hash(f)
-        hash_str = hash_obj.hash_file()
-        if hash_str:
-            sha_list.append(f"{f.name}: {hash_str}\n")
+    hash_obj = Hash(d_list)
+    hash_str = hash_obj.hash_file()
+    if hash_str:
+        sha_list.extend(f"{line}\n" for line in hash_str)
 
     if getattr(args, "location", None) is not None:
         log_obj = Log(args.all, args.location, sha_list)
