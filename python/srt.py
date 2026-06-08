@@ -1,9 +1,21 @@
 #!/usr/bin/env python3
 
+"""
+SRT - Sort downloads / desktop
+"""
 from pathlib import Path
 import shutil
 
 DOWNLOADS_PATH = Path.home() / "Downloads"
+TARGET = {
+    "pdf": Path.home() / "Documents" / "PDFs",
+    "iso": Path.home() / "VM" / "iso",
+    "jpg": Path.home() / "Pictures" / "Images",
+    "jpeg": Path.home() / "Pictures" / "Images",
+    "png": Path.home() / "Pictures" / "Images",
+}
+
+DESKTOP_PATH = Path.home() / "Desktop"
 TARGET = {
     "pdf": Path.home() / "Documents" / "PDFs",
     "iso": Path.home() / "VM" / "iso",
@@ -31,13 +43,13 @@ def dest_path(dest_dir: Path, filename: str) -> Path:
         n += 1
 
 if __name__ == "__main__":
-    if not DOWNLOADS_PATH.exists():
+    if not DOWNLOADS_PATH.exists() | DESKTOP_PATH.exists():
         print(f"Downloads path does not exist at: {DOWNLOADS_PATH}")
         raise SystemExit(1)
     
     count = 0
 
-    for fp in DOWNLOADS_PATH.iterdir():
+    for fp in DOWNLOADS_PATH.iterdir() and DESKTOP_PATH.iterdir():
         if not fp.is_file():
             continue
 

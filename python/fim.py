@@ -2,9 +2,11 @@
 
 import argparse
 import os
+import json
 from pathlib import Path
 import hashlib as hash
 from datetime import datetime
+from typing import Optional
 
 parser = argparse.ArgumentParser(prog="FIM", 
                                  description="File Integrity Monitor - Monitor directories for changing hashes"
@@ -16,10 +18,10 @@ sub = parser.add_subparsers()
 
 #TODO - add json logging / specified output - ex. only changed hashes
 log = sub.add_parser("log")
-log.add_argument("-a", "--a", dest="all", default=True, help="log all output to text file")
+log.add_argument("-a", "--a", dest="all", action="store_true", default=True, help="log all output to text / json file")
+log.add_argument("-j", "--json", dest="json", action="store_true", default=False, help="log output as json")
 log.add_argument("location", type=Path, help="location of output text file")
 
-#TODO - add regex
 class Recurse:
     def __init__(self, path: Path) -> None:
         self.path = path 
@@ -38,7 +40,7 @@ class Hash:
     def __init__(self, paths: list[Path]) -> None:
         self.paths = paths
     
-    def hash_file(self) -> list[str]:
+    def hash_file(self) -> list[tuple[Path, str]]:
         h_list = []
         for i in self.paths:
             if not i.exists():
@@ -58,35 +60,53 @@ class Hash:
                 print("Couldn't hash file")
                 continue
             
-            h_list.append(f"{i.name}: {h.hexdigest()}")
+            h_list.append((i, h.hexdigest()))
 
         return h_list
 
 class Log:
-    def __init__(self, output_all: bool, location: Path, sha: list[str]) -> None:
+    def __init__(
+                self, 
+                output_all: bool, 
+                json: bool, 
+                location: Path, 
+                sha_list: Optional[list[str]],
+                json_data: Optional[dict[str, str]],
+            ) -> None:
         self.all = output_all 
         self.location = location
-        self.sha = sha
+        self.sha_list = sha_list
+        self.json_data = json_data
 
     def log(self):
-        time = datetime.now()
+        time = datetime.now().isoformat("_")
         if self.all:
-            new_log = self.location.joinpath(f"log_{time}_.txt")
-            new_log.write_text("".join(self.sha)) 
+            if self.json_data:
+                json_log = self.location.joinpath(f"log_{time}_.json")
+                with open(json_log, 'w', encoding='utf-8') as f:
+                    json.dump(self.json_data, f, indent=2)
+            else:
+                new_log = self.location.joinpath(f"log_{time}_.txt")
+                if self.sha_list:
+                    new_log.write_text("".join(self.sha_list)) 
 
-            
+def construct_data(hash_entries: list[tuple[Path, str]]) -> dict[str, str]:
+    return {str(path): digest for path, digest in hash_entries}
 
 if __name__ == "__main__":
     args = parser.parse_args()
     
     sha_list = []
+    data = None
     d_list = Recurse(args.directory).get_all()
-
     hash_obj = Hash(d_list)
-    hash_str = hash_obj.hash_file()
-    if hash_str:
-        sha_list.extend(f"{line}\n" for line in hash_str)
+    hash_entries = hash_obj.hash_file()
+
+    if hash_entries:
+        sha_list.extend(f"{path.name}: {digest}\n" for path, digest in hash_entries)
+        if args.json:
+            data = construct_data(hash_entries)
 
     if getattr(args, "location", None) is not None:
-        log_obj = Log(args.all, args.location, sha_list)
+        log_obj = Log(args.all, args.json, args.location, sha_list, data)
         log_obj.log()
