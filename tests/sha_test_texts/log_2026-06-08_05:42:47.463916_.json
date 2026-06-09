@@ -1,6 +1,0 @@
-{
-  "sha_test_texts/goodbye.txt": "71573b922a87abc3fd1a957f2cfa09d9e16998567dd878a85e12166112751806",
-  "sha_test_texts/log_2026-06-08_04:56:08.619915_.txt": "18f5d9a866613c094e2b3553706a715046408748b3716ef29fa2c3470b0b9cb2",
-  "sha_test_texts/hello.txt": "5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03",
-  "sha_test_texts/hello_again/hello_again.txt": "d9a4c6676a62cb3b8ca0b8459ab341837cdba8543316c8574b454ccc24d4c690"
-}

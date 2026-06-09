@@ -16,7 +16,7 @@ parser.add_argument("directory", type=Path, help="Directory you wish to monitor"
 
 sub = parser.add_subparsers()
 
-#TODO - add json logging / specified output - ex. only changed hashes
+#TODO - specified output - ex. only changed hashes
 log = sub.add_parser("log")
 log.add_argument("-a", "--a", dest="all", action="store_true", default=True, help="log all output to text / json file")
 log.add_argument("-j", "--json", dest="json", action="store_true", default=False, help="log output as json")
@@ -85,17 +85,24 @@ class Log:
                 json_log = self.location.joinpath(f"log_{time}_.json")
                 with open(json_log, 'w', encoding='utf-8') as f:
                     json.dump(self.json_data, f, indent=2)
+                    print(f"Made log - {json_log}")
             else:
-                new_log = self.location.joinpath(f"log_{time}_.txt")
+                txt_log = self.location.joinpath(f"log_{time}_.txt")
                 if self.sha_list:
-                    new_log.write_text("".join(self.sha_list)) 
+                    txt_log.write_text("".join(self.sha_list)) 
+                    print(f"Made log - {txt_log}")
 
 def construct_data(hash_entries: list[tuple[Path, str]]) -> dict[str, str]:
-    return {str(path): digest for path, digest in hash_entries}
+    data = {}
+    for p, s in hash_entries:
+        data[str(p)] = {"Hash": s}
+    return data
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    
+
+    print("Welcome to Aletha Labs - FIM")
+
     sha_list = []
     data = None
     d_list = Recurse(args.directory).get_all()
