@@ -9,19 +9,43 @@ from datetime import datetime
 from typing import Optional
 
 parser = argparse.ArgumentParser(prog="FIM", 
-                                 description="File Integrity Monitor - Monitor directories for changing hashes"
-                                 )
+                                 description="File Integrity Monitor - Monitor directories for changing hashes")
 
 parser.add_argument("directory", type=Path, help="Directory you wish to monitor")
 
 sub = parser.add_subparsers()
 
-#TODO - specified output - ex. only changed hashes
+"""
+Log sub command:
+    - logs as json or txt files
+    - can be configured to log a base case
+    - can log warnings of recent hash changes compared to base
+"""
 log = sub.add_parser("log")
-log.add_argument("-a", "--a", dest="all", action="store_true", default=True, help="log all output to text / json file")
-log.add_argument("-j", "--json", dest="json", action="store_true", default=False, help="log output as json")
+log.add_argument("-a", "--all", dest="all", 
+                action="store_true", default=True, 
+                help="log all output to text / json file"
+                )
+log.add_argument("-b", "--base", dest="base", 
+                action="store_true", default=False, 
+                help="log all output for base comparison"
+                )
+log.add_argument("-w", "--warnings", dest="warnings", 
+                action="store_true", default=False, 
+                help="only log warnings of mismatch comparisons from base"
+                )
+log.add_argument("-j", "--json", dest="json", 
+                action="store_true", default=False, 
+                help="log output as json"
+                )
 log.add_argument("location", type=Path, help="location of output text file")
 
+"""
+Recurse class:
+    - walks directories
+    - follows symlinks to find all nested directories/files
+"""
+#TODO - add depth configuration
 class Recurse:
     def __init__(self, path: Path) -> None:
         self.path = path 
@@ -36,6 +60,11 @@ class Recurse:
 
 #TODO - Add compare class / functionality  
 
+"""
+Hash class:
+    - hashes a given file
+    - uses sha256 
+"""
 class Hash:
     def __init__(self, paths: list[Path]) -> None:
         self.paths = paths
@@ -68,7 +97,6 @@ class Log:
     def __init__(
                 self, 
                 output_all: bool, 
-                json: bool, 
                 location: Path, 
                 sha_list: Optional[list[str]],
                 json_data: Optional[dict[str, str]],
@@ -92,6 +120,9 @@ class Log:
                     txt_log.write_text("".join(self.sha_list)) 
                     print(f"Made log - {txt_log}")
 
+"""
+Constructs data for json output
+"""
 def construct_data(hash_entries: list[tuple[Path, str]]) -> dict[str, str]:
     data = {}
     for p, s in hash_entries:
@@ -101,7 +132,7 @@ def construct_data(hash_entries: list[tuple[Path, str]]) -> dict[str, str]:
 if __name__ == "__main__":
     args = parser.parse_args()
 
-    print("Welcome to Aletha Labs - FIM")
+    print("Welcome to Aletha Labs - FIM\n")
 
     sha_list = []
     data = None
@@ -115,5 +146,5 @@ if __name__ == "__main__":
             data = construct_data(hash_entries)
 
     if getattr(args, "location", None) is not None:
-        log_obj = Log(args.all, args.json, args.location, sha_list, data)
+        log_obj = Log(args.all, args.location, sha_list, data)
         log_obj.log()
