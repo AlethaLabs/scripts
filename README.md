@@ -16,7 +16,25 @@ python script_name.py
 
 ## If you are feeling fancy
 
-In your .bashrc / .zshrc
+In your .bashrc
+```bash
+shopt -s nullglob
+scripts=(path/to/scripts/python/*.py)
+shopt -u nullglob
+
+if ! test -d "$HOME/.local/bin"; then
+        mkdir -p $HOME/.local/bin
+fi
+
+for i in "${scripts[@]}"; do
+        chmod +x "$i"
+        ln -sf "$i" "$HOME/.local/bin/$(basename "$i" .py)"
+done
+
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+Or - In your .zshrc
 
 ```bash
 # Python scripts - make sure to add the end '*.py(.N)'
